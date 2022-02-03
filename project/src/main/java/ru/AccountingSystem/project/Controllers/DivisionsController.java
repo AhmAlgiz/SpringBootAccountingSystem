@@ -1,66 +1,56 @@
 package ru.AccountingSystem.project.Controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.AccountingSystem.project.Exception.RecordNotFoundException;
 import ru.AccountingSystem.project.Models.Divisions;
 import ru.AccountingSystem.project.Models.Personnel;
-import ru.AccountingSystem.project.Repositories.DivisionsRepository;
+
+import ru.AccountingSystem.project.Services.DivisionsService;
 
 
 import java.util.List;
 
 @RestController
 public class DivisionsController {
-    private final DivisionsRepository divisionsRepository;
+    private final DivisionsService divisionsService;
 
-
-    public DivisionsController(DivisionsRepository divisionsRepository) {
-        this.divisionsRepository = divisionsRepository;
+    @Autowired
+    public DivisionsController(DivisionsService divisionsService) {
+        this.divisionsService = divisionsService;
     }
 
     @GetMapping("/api/divisions")
     public List<Divisions> divisionsListAll() {
-        return divisionsRepository.findAll();
+        return divisionsService.findAll();
     }
 
     @GetMapping("/api/divisions/{id}")
     public Divisions division(@PathVariable Long id) {
-        return divisionsRepository.findById(id)
-                .orElseThrow(()->new RecordNotFoundException(id));
+        return divisionsService.findById(id);
     }
 
     @GetMapping("/api/divisions/findByName/{name}")
     public List <Divisions> division(@PathVariable String name) {
-        return divisionsRepository.findByName(name);
+        return divisionsService.findByName(name);
     }
 
     @GetMapping("/api/divisions/personnel/{divisionsId}")
     public List<Personnel> personnelList(@PathVariable Long divisionsId) {
-        return divisionsRepository.findById(divisionsId).get().getPersonnel();
+        return divisionsService.showAllPersonnelInDivision(divisionsId);
     }
 
     @PostMapping("/api/divisions")
     public Divisions newDivision(Divisions newDivision) {
-        return divisionsRepository.save(newDivision);
+        return divisionsService.createNew(newDivision);
     }
 
     @PutMapping("/api/divisions/{id}")
     public Divisions editDivision (@PathVariable Long id, Divisions newDivision) {
-        return divisionsRepository.findById(id)
-                .map(division -> {
-                    division.setName(newDivision.getName());
-                    division.setDepartment(newDivision.getDepartment());
-                    return divisionsRepository.save(division);
-                })
-                .orElseGet(()-> {
-                    newDivision.setId(id);
-                    newDivision.setDepartment(newDivision.getDepartment());
-                    return divisionsRepository.save(newDivision);
-                });
+        return divisionsService.editById(id, newDivision);
     }
 
     @DeleteMapping("/api/divisions/{id}")
     public void delete(@PathVariable Long id) {
-        divisionsRepository.deleteById(id);
+        divisionsService.deleteById(id);
     }
 }
